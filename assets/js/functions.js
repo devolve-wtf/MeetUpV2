@@ -2,6 +2,7 @@ var sitekey;
 var geocoder = new google.maps.Geocoder();
 var limit = 0;
 var place = document.getElementById('Place');
+var active_suggestion = false;
 
 // Initialize Firebase
 var config = {
@@ -25,16 +26,16 @@ var chatroom = {
   current_messge: "",
   username: "",
   chatname: "",
-  ignore_chat_username: false,
 
   UpdateChat: function() {
     database.ref(sitekey + '/chat').on("value", function(snapshot) {
       if (snapshot.child("LatestName").exists() && snapshot.child("LatestMessage").exists()) {
         $("#ChatTitle").text(' ' + snapshot.val().Chatname);
-        $('#sitekey').append('SITEKEY (Use to share this meet up): <span>' + sitekey + '</span>');
+        $('#sitekey').html('SITEKEY (Use to share this meet up): <span>' + sitekey + '</span>');
         chatroom.chatname = snapshot.val().Chatname;
         chatroom.current_message = snapshot.val().LatestMessage;
         chatroom.current_name = snapshot.val().LatestName;
+        limit = parseInt(snapshot.val().NumberOfUsers);
       }
       if (chatroom.current_message != "") {
         $("#ChatBox").append('<h4>' + chatroom.current_name.toUpperCase() + ': ' + chatroom.current_message + '</h4>');
@@ -45,8 +46,6 @@ var chatroom = {
     });
     database.ref(sitekey + '/chatconnections').on("child_added", function(snapshot) {
       $("#UserList").append('<div class="row" id="' + snapshot.val().userName + '"><span class="glyphicon glyphicon-ok" style="font-size:12px;color:green"></span> ' + snapshot.val().userName + '</div>');
-
-      $("#UserJoined").append('<div class="bg-success" id="' + snapshot.val().userName + '_user"><h3>'+ snapshot.val().userName + ' has joined</h3></div>')
 
     }, function(errorObject) {
       console.log("The read failed: " + errorObject.code);
@@ -86,17 +85,17 @@ var chatroom = {
 }
 
 function showModal(msg) {
-	$("#modal-msg").text(msg);
-	$("#main-error").modal({
-		keyboard: false
-	});
+  $("#modal-msg").text(msg);
+  $("#main-error").modal({
+    keyboard: false
+  });
 }
 function showModal(msg, title) {
-	$("#modal-title").text(title);
-	$("#modal-msg").text(msg);
-	$("#main-error").modal({
-		keyboard: false
-	});
+  $("#modal-title").text(title);
+  $("#modal-msg").text(msg);
+  $("#main-error").modal({
+    keyboard: false
+  });
 }
 
 $(document).ready(function() {
@@ -133,32 +132,6 @@ $(document).ready(function() {
     });
   });
 
-
-
-  // $("#SubmitExistingMeetUp").on("click", function(event) {
-  //   //edge empty input
-  //   event.preventDefault();
-  //   var enteredSiteKey = $('#ExistingMeetUp').val().trim();
-  //   sitekey = $("#ExistingMeetUp").val().trim();
-  //   database.ref(sitekey).on("value", function(snapshot) {
-  //     if (snapshot.exists() && enteredSiteKey !== '') {
-
-  //       createSecondForm();
-
-  //       $('#SubmitLocation').click(function(e) {
-  //         e.preventDefault();
-  //         locationFormHandler();
-  //         // selectAdmin();
-  //       });
-
-  //     } else {
-  //       showModal("Sitekey doesnt exist");
-  //       $('#ExistingMeetUp').val('').focus();
-
-  //     }
-  //   });
-
-  // });
   $("#SubmitExistingMeetUp").on("click", function(event) {
     //edge empty input
     event.preventDefault();
@@ -183,7 +156,144 @@ $(document).ready(function() {
     });
   });
 
+  $(document).on("click",'#Place', function(event){
+    $("#MeetLocation").val($(event.currentTarget).attr("data-name"));
+    $("#MeetAddress").val($(event.currentTarget).attr("data-address"));
+    $("#MeetDate").focus();
+
+
+  });
+
+  $(document).on("click","#SubmitSuggestion", function(){
+    var current_Location = $("#MeetLocation").val().trim();
+    var current_Address = $("#MeetAddress").val().trim();
+    var current_Date = $("#MeetDate").val();
+    var current_Time = $("#MeetTime").val();
+
+    if (current_Location === "" || current_Address === "" || current_Date === "" || current_Time === ""){
+      showModal("All input fields must be completed")
+    } 
+    else {
+      if (active_suggestion === false){
+        database.ref(sitekey + '/suggestion').update({
+          Name: chatroom.username,
+          Location: current_Location,
+          Address: current_Address,
+          myDate: current_Date,
+          Time: current_Time,
+          Action: "new" 
+        });
+      } 
+      else {
+        showModal("Please respond to the current suggestion first");
+      };
+    };
+  });
+
+  $(document).on("click", "#SuggestionNo", function(){    
+    database.ref(sitekey + '/suggestion').update({
+      Name: "",
+      Location: "",
+      Address: "",
+      myDate: "",
+      Time: "" ,
+      Action: "reject"   
+    });
+    database.ref(sitekey + '/acceptmeetup').set("");
+  });
+
+  $(document).on("click","#SuggestionYes", function(){
+    $("#SuggestionYes").remove();
+    $("#SuggestionNo").text("Cancel");
+    database.ref(sitekey + '/acceptmeetup').push(true);
+  })
+
 }); // doc.ready
+
+function suggestion(){
+  database.ref(sitekey+ '/suggestion').set({
+    Name : "",
+    Location: "",
+    Address: "",
+    myDate: "",
+    Time: "",
+    Action: "initial"  
+  });
+  database.ref(sitekey+ '/acceptmeetup').set("");
+  database.ref(sitekey + '/suggestion').on("value", function(snapshot){
+    if (snapshot.val().Action === "initial"){
+      active_suggestion = false;
+    }
+    else if (snapshot.val().Action === "reject"){
+      active_suggestion = false;      
+      $("#Meetup").empty();
+      $("#HomeTab").addClass("active");
+      $("#ChatTab").removeClass("active");
+      $("#MeetupTab").removeClass("active");  
+      $("#Search").addClass("active in");
+      $("#Chat").removeClass("active in");
+      $("#Meetup").removeClass("active in");      
+      showModal("The current meetup was declined");
+    }
+    else if (snapshot.val().Action === "new"){
+      active_suggestion = true;
+      $("#HomeTab").removeClass("active");
+      $("#ChatTab").removeClass("active");
+      $("#MeetupTab").addClass("active");  
+      $("#Search").removeClass("active in");
+      $("#Chat").removeClass("active in");
+      $("#Meetup").addClass("active in"); 
+      let container = $('<div>', {'class':'jumbotron text-center'});
+      let header = $('<h3>');
+      header.text(snapshot.val().Name + ' suggested:');
+      let print_location = $('<h5>');
+      let print_address = $('<h5>');
+      let print_date = $('<h5>');
+      let print_time = $('<h5>');
+      let print_accepted = $('<h6>');
+      print_location.text('Location: ' + snapshot.val().Location);
+      print_address.text('Addresss: ' + snapshot.val().Address);
+      print_date.text('Date: ' + snapshot.val().myDate);
+      print_time.text('Time: ' + snapshot.val().Time);
+      print_accepted.html('<span id="NumberAccepted">0</span> /' + limit +' have accepted this meetup')
+      container.append(header).append(print_location).append(print_address).append(print_date).append(print_time).append(print_accepted);
+      $("#Meetup").append(container);
+      $("#Meetup").append('<button id="SuggestionYes" class="btn btn-success">Accept</button>');
+      $("#Meetup").append('<button id="SuggestionNo" class="btn btn-danger">Decline</button>');
+    };   
+  });
+  database.ref(sitekey + '/acceptmeetup').on("value", function(snapshot){
+    $("#NumberAccepted").text(snapshot.numChildren());
+    if (limit !== 0 && limit === snapshot.numChildren()){
+      active_suggestion = false;
+      showModal("Meetup Finalized!", "Success");
+      $("#Meetup").empty();
+      $("#HomeTab").addClass("active");
+      $("#ChatTab").removeClass("active");
+      $("#MeetupTab").removeClass("active");  
+      $("#Search").addClass("active in");
+      $("#Chat").removeClass("active in");
+      $("#Meetup").removeClass("active in"); 
+      $("#Suggestion").remove();
+      $("#List").remove(); 
+      database.ref(sitekey + '/suggestion').once("value").then(function(snap){
+        let container = $('<div>', {'class':'jumbotron text-center','id':'Finalized'});
+        let header = $('<h4>');
+        header.text('Your Meeting is set for:');
+        let print_location = $('<h3>');
+        let print_address = $('<h3>');
+        let print_date = $('<h3>');
+        let print_time = $('<h3>');
+        print_location.text('Location: ' + snap.val().Location);
+        print_address.text('Addresss: ' + snap.val().Address);
+        print_date.text('Date: ' + snap.val().myDate);
+        print_time.text('Time: ' + snap.val().Time);
+        container.append(header).append(print_location).append(print_address).append(print_date).append(print_time);
+        $("#Search").append(container); 
+      });
+    };
+  });
+}
 
 function keyGen() {
 
@@ -263,7 +373,7 @@ function locationFormHandler() {
         $('.container').removeClass('hide');
         $('.jumbotron').removeClass('hide');
         chatroom.UpdateChat();
-        // selectAdmin();
+        suggestion();
         createMap();
       }
 
@@ -318,10 +428,10 @@ function midpointMultipleLatLon(listLatLong){
 }
 
 function createMap () {
-	var users;
-	database.ref(sitekey + '/chat').on('value', function(snapshot) {
-		users = parseInt(snapshot.val().NumberOfUsers);
-	});
+  var users;
+  database.ref(sitekey + '/chat').on('value', function(snapshot) {
+    users = parseInt(snapshot.val().NumberOfUsers);
+  });
 
     database.ref(sitekey + '/connections').on("value", function(snapshot) {
       var difference = users - snapshot.numChildren();
@@ -335,34 +445,38 @@ function createMap () {
       }
       // var active_users = snapshot.numChildren();
       //console.log(snapshot.numChildren() === users, users);
-	      if (snapshot.numChildren() === users) {
+        if (snapshot.numChildren() === users) {
 
-				var locations = [];
-				database.ref(sitekey + "/connections").once("value").then(function(snapshot){
-					snapshot.forEach(function(childSnapshot){
-						var location = {lat: childSnapshot.val().Location[0], long: childSnapshot.val().Location[1], name: childSnapshot.val().userName };
-						locations.push(location);
-					});
-					var coordinates = midpointMultipleLatLon(locations);
-					var lat = coordinates[0];
-					var lon = coordinates[1];
-					initMap(lat, lon);
+        var locations = [];
+        database.ref(sitekey + "/connections").once("value").then(function(snapshot){
+          snapshot.forEach(function(childSnapshot){
+            var location = {lat: childSnapshot.val().Location[0], long: childSnapshot.val().Location[1], name: childSnapshot.val().userName };
+            locations.push(location);
+          });
+          var coordinates = midpointMultipleLatLon(locations);
+          var lat = coordinates[0];
+          var lon = coordinates[1];
+          initMap(lat, lon);
           console.log(locations);
           for (let location in locations) {
             userLocation(locations[location].lat, locations[location].long, locations[location].name);
           }
 
-				 });
-	      }
+         });
+        }
 
     });
 }
 
 function removeMap(){
+  $("#Finalized").remove();
+  $("#Suggestion").remove();
+  $("#Meetup").empty();
   $("#Lobby").remove();
   $("#Map").remove();
   $("#List").remove();
   $("#Place").remove();
+  $("Suggestion").remove();
   $("#Search").append(
           '<div class="row" id="Lobby" style="text-align:center;padding-top:10px">'+
               '<div class="col-xs-6">' +
@@ -383,22 +497,62 @@ function removeMap(){
       console.log(childSnapshot.val().userName);
       $("#UserJoined").append('<div class="bg-success" id="' + childSnapshot.val().userName + '_user" style="border-radius:5px;height:35px;vertical-align:center;width:100%;text-align:center"><h3>'+ childSnapshot.val().userName + ' has joined</h3></div>');
     })
-  })
+  });
+  database.ref(sitekey+ '/suggestion').set({
+    Name : "",
+    Location: "",
+    Address: "",
+    myDate: "",
+    Time: "",
+    Action: "initial"  
+  });
+  database.ref(sitekey + '/acceptmeetup').set("");
 }
 
 /***initialize map and business search****/
 function initMap(latitude, longitude) {
   $("#HomeTab").addClass("active");
   $("#ChatTab").removeClass("active");
+  $("#MeetupTab").removeClass("active");  
   $("#Search").addClass("active in");
   $("#Chat").removeClass("active in");
+  $("#Meetup").removeClass("active in");  
   var pyrmont = {lat: latitude, lng: longitude};
   $('#Lobby').remove();
   $('#Search').append(
 
-  	'<div id="Map"></div>' +
-  	'<div id="List"></div>' +
-  	'<div id="Place"></div>'
+    '<div id="Map"></div>' +
+    '<div id="Suggestion" style="padding-bottom:30px">'+
+      '<div class="row">' +
+        '<div class="col-sm-6">' + 
+          '<div class="form-group">' +
+            '<label for="MeetLocation">Location</label>' +                           
+              '<input class="form-control" id="MeetLocation" type="text">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label for="MeetAddress">Address</label>' +                           
+              '<input class="form-control" id="MeetAddress" type="text">' +
+          '</div>' +          
+        '</div>' +
+        '<div class="col-sm-6">' + 
+          '<div class="form-group">' +
+            '<label for="MeetDate">Date</label>' +                           
+              '<input class="form-control" id="MeetDate" type="date">' +
+          '</div>' +          
+          '<div class="form-group">' +
+            '<label for="MeetTime">Time</label>' +                           
+              '<input class="form-control" id="MeetTime" type="time">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="row">' +
+        '<div class="col-xs-12">' +
+          '<button class="btn btn-primary" id="SubmitSuggestion">Suggest</button>' +   
+        '</div>' +
+      '</div>' + 
+    '</div>' +
+    '<div id="List"></div>' +
+    '<div id="Place"></div>'
 
   );
 
@@ -427,16 +581,25 @@ function displayBusinesses(results, status) {
 
       let placeId = results[i].place_id;
 
+      let container = $('<div>',{'class':'col-sm-6'});
       let panel = $('<div>', {'class': 'panel panel-default'});
       let panelHeading = $('<div>', {'class': 'panel-heading'});
-      let panelTitle = $('<h3>', {'class': 'panel-title'});
       let panelBody = $('<div>', {'class': 'panel-body'});
 
       panel.append(panelHeading, panelBody);
-      panelHeading.append(panelTitle);
-      panelTitle.append(results[i].name);
+      // panelHeading.append(panelTitle);
+      panelHeading.append(
+        '<div class="row">'+ 
+          '<div class="col-xs-9">' + 
+            '<h3 class="panel-title">' + results[i].name + '</h3>' +
+          '</div>' +
+          '<div class="col-xs-3">' + 
+            '<button class="btn btn-success" id="Place" data-name="' + results[i].name + '" data-address="' + results[i].vicinity + '">Select</button>' +
+          '</div>' +
+        '</div>');
       panelBody.append(results[i].vicinity);
       panelBody.append('<span class="glyphicon glyphicon-menu-down pull-right"></span>');
+      container.append(panel);
 
       /**gets additional details and expands .panel-body
       ***unbinds getDetails() after first click then binds
@@ -450,7 +613,7 @@ function displayBusinesses(results, status) {
         });
       });
 
-      $('#List').append(panel);
+      $('#List').append(container);
     }
   }
 }
