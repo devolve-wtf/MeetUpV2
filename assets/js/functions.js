@@ -6,12 +6,12 @@ var active_suggestion = false;
 
 // Initialize Firebase
 var config = {
-  apiKey: "AIzaSyBswMwyD7IWpaSv2NuQD5uscHK4YeEjM8s",
-  authDomain: "ks-firebase-app1.firebaseapp.com",
-  databaseURL: "https://ks-firebase-app1.firebaseio.com",
-  projectId: "ks-firebase-app1",
-  storageBucket: "ks-firebase-app1.appspot.com",
-  messagingSenderId: "1024949813364"
+  apiKey: "AIzaSyDkKzJvL4pPVhuJuSHJRZyBA11FbeFJz_8",
+  authDomain: "meetup-8339a.firebaseapp.com",
+  databaseURL: "https://meetup-8339a.firebaseio.com",
+  projectId: "meetup-8339a",
+  storageBucket: "meetup-8339a.appspot.com",
+  messagingSenderId: "292796186459"
 };
 firebase.initializeApp(config);
 
@@ -42,13 +42,11 @@ var chatroom = {
       }
       chatroom.scrollSmoothToBottom("ChatBox");
     }, function(errorObject) {
-      console.log("The read failed: " + errorObject.code);
     });
     database.ref(sitekey + '/chatconnections').on("child_added", function(snapshot) {
       $("#UserList").append('<div class="row" id="' + snapshot.val().userName + '"><span class="glyphicon glyphicon-ok" style="font-size:12px;color:green"></span> ' + snapshot.val().userName + '</div>');
 
     }, function(errorObject) {
-      console.log("The read failed: " + errorObject.code);
     });
     database.ref(sitekey + '/chatconnections').on("child_removed", function(snapshot) {
       $("#" + snapshot.val().userName).remove();
@@ -84,14 +82,9 @@ var chatroom = {
   }
 }
 
-function showModal(msg) {
-  $("#modal-msg").text(msg);
-  $("#main-error").modal({
-    keyboard: false
-  });
-}
-function showModal(msg, title) {
-  $("#modal-title").text(title);
+
+function showModal(msg, title = "Error") {
+  $(".modal-title").text(title);
   $("#modal-msg").text(msg);
   $("#main-error").modal({
     keyboard: false
@@ -114,7 +107,6 @@ $(document).ready(function() {
     var numberOfUsers = $('#NumberOfUsers').val();
     limit = parseInt(numberOfUsers);
     sitekey = keyGen();
-    console.log(numberOfUsers)
     if ( name !== '' && numberOfUsers !== '') {
       database.ref(sitekey + '/chat').set({
         NumberOfUsers: numberOfUsers,
@@ -139,7 +131,6 @@ $(document).ready(function() {
     sitekey = $("#ExistingMeetUp").val().trim();
     database.ref(sitekey).once("value").then(function(snapshot){
       if (snapshot.exists() && enteredSiteKey !== '') {
-        console.log(parseInt(snapshot.val().chat.NumberOfUsers),Object.keys(snapshot.val().connections).length);
         if(parseInt(snapshot.val().chat.NumberOfUsers) === Object.keys(snapshot.val().connections).length){
           showModal("This meet is currently full.")
         } else{
@@ -379,7 +370,6 @@ function locationFormHandler() {
       }
 
     } else {
-      console.log('error: ' + status);
       $('#Location').focus();
       alert('bad address');
     }
@@ -458,7 +448,6 @@ function createMap () {
           var lat = coordinates[0];
           var lon = coordinates[1];
           initMap(lat, lon);
-          console.log(locations);
           for (let location in locations) {
             userLocation(locations[location].lat, locations[location].long, locations[location].name);
           }
