@@ -1,22 +1,25 @@
-var sitekey;
-var geocoder = new google.maps.Geocoder();
-var limit = 0;
-var place = document.getElementById('Place');
-
 // Initialize Firebase
 var config = {
-  apiKey: "AIzaSyBswMwyD7IWpaSv2NuQD5uscHK4YeEjM8s",
-  authDomain: "ks-firebase-app1.firebaseapp.com",
-  databaseURL: "https://ks-firebase-app1.firebaseio.com",
-  projectId: "ks-firebase-app1",
-  storageBucket: "ks-firebase-app1.appspot.com",
-  messagingSenderId: "1024949813364"
+  apiKey: "AIzaSyC6B82IlusPIV2rMJA79A9z6uAvSr-SVEE",
+  authDomain: "friendlychat-56d31.firebaseapp.com",
+  databaseURL: "https://friendlychat-56d31.firebaseio.com",
+  projectId: "friendlychat-56d31",
+  storageBucket: "friendlychat-56d31.appspot.com",
+  messagingSenderId: "379256444845"
 };
 firebase.initializeApp(config);
-
-
 var database = firebase.database();
-
+var geocoder = new google.maps.Geocoder();
+/*
+* @type {string} sitekey A random hashed id for each meet up
+**/
+var sitekey;
+/*
+* @type {number} limit The limited amount of users for a given meet up
+**/
+var limit = 0;
+/*********** is this being used *************/
+var place = document.getElementById('Place');
 
 var chatroom = {
   initial_name: "",
@@ -26,7 +29,9 @@ var chatroom = {
   username: "",
   chatname: "",
   ignore_chat_username: false,
-
+  /*
+  * @function UpdateChat
+  **/
   UpdateChat: function() {
     database.ref(sitekey + '/chat').on("value", function(snapshot) {
       if (snapshot.child("LatestName").exists() && snapshot.child("LatestMessage").exists()) {
@@ -44,7 +49,7 @@ var chatroom = {
       console.log("The read failed: " + errorObject.code);
     });
     database.ref(sitekey + '/chatconnections').on("child_added", function(snapshot) {
-      $("#UserList").append('<div class="row" id="' + snapshot.val().userName + '"><span class="glyphicon glyphicon-ok" style="font-size:12px;color:green"></span> ' + snapshot.val().userName + '</div>');
+      $("#UserList").append('<div class="row" id="' + snapshot.val().userName + '"><span class="glyphicon glyphicon-ok"></span> ' + snapshot.val().userName + '</div>');
     }, function(errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
@@ -53,7 +58,9 @@ var chatroom = {
       $("#" + snapshot.val().userName +'_user').remove();
     });
   },
-
+  /*
+  * @function SubmitMessage
+  **/
   SubmitMessage: function() {
     event.preventDefault();
       var re = new RegExp('[^<>]+',"g");
@@ -73,7 +80,9 @@ var chatroom = {
       Chatname: chatroom.chatname
     });
   },
-
+  /*
+  * @function scrollSmoothToBottom
+  **/
   scrollSmoothToBottom: function(id) {
     var div = document.getElementById(id);
     $('#' + id).animate({
@@ -81,159 +90,75 @@ var chatroom = {
     }, 500);
   }
 }
-
+/*
+* @function showModal
+**/
 function showModal(msg) {
-	$("#modal-msg").text(msg);
-	$("#main-error").modal({
-		keyboard: false
-	});
+  $("#modal-msg").text(msg);
+  $("#main-error").modal({
+    keyboard: false
+  });
 }
+
+/**************** WHY IS THIS FUNCTION NEEDED ???? *******************/
 function showModal(msg, title) {
-	$("#modal-title").text(title);
-	$("#modal-msg").text(msg);
-	$("#main-error").modal({
-		keyboard: false
-	});
+  $("#modal-title").text(title);
+  $("#modal-msg").text(msg);
+  $("#main-error").modal({
+    keyboard: false
+  });
 }
+/**************** END WHY IS THIS FUNCTION NEEDED ???? *******************/
 
-$(document).ready(function() {
-
-  // js for bootstrap tabs
-  $('#myTabs a').click(function(e) {
-    e.preventDefault()
-    $(this).tab('show')
-  });
-
-  $("#SubmitMessage").click(chatroom.SubmitMessage);
-
-  $("#SubmitNewMeetUp").on("click", function(event) {
-    event.preventDefault();
-    var name = $("#NewMeet").val().trim();
-    var numberOfUsers = $('#NumberOfUsers').val();
-    limit = parseInt(numberOfUsers);
-    sitekey = keyGen();
-    console.log(numberOfUsers)
-    if ( name !== '' && numberOfUsers !== '') {
-      database.ref(sitekey + '/chat').set({
-        NumberOfUsers: numberOfUsers,
-        LatestName: "",
-        LatestMessage: "",
-        Chatname: name
-      });
-
-      createSecondForm();
-    }
-
-    $('#SubmitLocation').click(function(e) {
-      e.preventDefault();
-      locationFormHandler();
-    });
-  });
-
-
-
-  // $("#SubmitExistingMeetUp").on("click", function(event) {
-  //   //edge empty input
-  //   event.preventDefault();
-  //   var enteredSiteKey = $('#ExistingMeetUp').val().trim();
-  //   sitekey = $("#ExistingMeetUp").val().trim();
-  //   database.ref(sitekey).on("value", function(snapshot) {
-  //     if (snapshot.exists() && enteredSiteKey !== '') {
-
-  //       createSecondForm();
-
-  //       $('#SubmitLocation').click(function(e) {
-  //         e.preventDefault();
-  //         locationFormHandler();
-  //         // selectAdmin();
-  //       });
-
-  //     } else {
-  //       showModal("Sitekey doesnt exist");
-  //       $('#ExistingMeetUp').val('').focus();
-
-  //     }
-  //   });
-
-  // });
-  $("#SubmitExistingMeetUp").on("click", function(event) {
-    //edge empty input
-    event.preventDefault();
-    var enteredSiteKey = $('#ExistingMeetUp').val().trim();
-    sitekey = $("#ExistingMeetUp").val().trim();
-    database.ref(sitekey).once("value").then(function(snapshot){
-      if (snapshot.exists() && enteredSiteKey !== '') {
-        console.log(parseInt(snapshot.val().chat.NumberOfUsers),Object.keys(snapshot.val().connections).length);
-        if(parseInt(snapshot.val().chat.NumberOfUsers) === Object.keys(snapshot.val().connections).length){
-          showModal("This meet is currently full.")
-        } else{
-          createSecondForm();
-          $('#SubmitLocation').click(function(e) {
-            e.preventDefault();
-            locationFormHandler();
-          });
-        };
-      } else {
-        showModal("Sitekey doesnt exist");
-        $('#ExistingMeetUp').val('').focus();
-      };
-    });
-  });
-
-}); // doc.ready
-
+/*
+* @function keyGen
+**/
 function keyGen() {
-
   var length = 10;
   var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
   var key = '';
-
   for (let i = 0; i < length; i++) {
-
     key += chars[Math.floor(Math.random() * chars.length)];
-
   }
-
   return key;
-
 }
-
+/*
+* @function createSecondForm
+**/
 function createSecondForm() {
-
   $('#StartUp').empty().append(
     '<div class="row second-form">' +
-    '<div class="col-md-3"></div>' +
-    '<div class="col-md-6 jumbotron">' +
-    '<h2>User Info</h2>' +
-    '<div class="form-group">' +
-    '<label>Name</label>' +
-    '<input class="form-control" id="UserName" type="text" placeholder="Please enter a name" style="margin-bottom:3px">' +
-    '</div>' +
-    '<div class="form-group">' +
-    '<label>Location</label>' +
-    '<input type="text" name="Location" id="Location" class="form-control" placeholder="Your Location">' +
-    '</div>' +
-    '<button class="btn btn-success" id="SubmitLocation" type="submit">Submit</button>' +
-    '</div>' +
-    '<div class="col-md-3"></div>' +
+      '<div class="col-md-3"></div>' +
+      '<div class="col-md-6 jumbotron">' +
+        '<h2>User Info</h2>' +
+          '<div class="form-group">' +
+            '<label>Name</label>' +
+              '<input class="form-control" id="UserName" type="text" placeholder="Please enter a name">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Location</label>' +
+            '<input type="text" name="Location" id="Location" class="form-control" placeholder="Your Location">' +
+          '</div>' +
+          '<button class="btn btn-success" id="SubmitLocation" type="submit">Submit</button>' +
+      '</div>' +
+      '<div class="col-md-3"></div>' +
     '</div>'
   );
 }
-
+/*
+* @function locationFormHandler
+**/
 function locationFormHandler() {
   var name = "";
   var pname = $('#UserName').val().trim();
-  // Regular expressions to get rid of < and > for potential SQL injection
   var re = new RegExp('[^<>]+',"g");
   var arrayStrings = pname.match(re);
   arrayStrings.forEach(function(string){
     name += string;
-  })
+  });
 
   var location = $('#Location').val().trim();
-
   chatroom.username = name;
-
   geocoder.geocode({
     'address': location
   }, function(results, status) {
@@ -260,7 +185,6 @@ function locationFormHandler() {
         $('.container').removeClass('hide');
         $('.jumbotron').removeClass('hide');
         chatroom.UpdateChat();
-        // selectAdmin();
         createMap();
       }
 
@@ -271,19 +195,23 @@ function locationFormHandler() {
     }
   });
 }
-
+/*
+* @function toRadians
+**/
  function toRadians(degree){
   return degree*Math.PI/180;
  }
-
+ /*
+ * @function toDegree
+ **/
  function toDegree(radian){
   return radian * 180/Math.PI;
  }
-
-// Input array of objects {lat, long, username}
+ /*
+ * @function midpointMultipleLatLon
+ **/
 function midpointMultipleLatLon(listLatLong){
-  if (listLatLong.length == 1)
-  {
+  if (listLatLong.length == 1) {
     return [listLatLong[0].lat, listLatLong[0].long];
   }
 
@@ -291,8 +219,7 @@ function midpointMultipleLatLon(listLatLong){
   var y = 0;
   var z = 0;
 
-  listLatLong.forEach(function(latLong)
-  {
+  listLatLong.forEach(function(latLong) {
     var latitude = toRadians(latLong.lat);
     var longitude = toRadians(latLong.long);
 
@@ -313,59 +240,60 @@ function midpointMultipleLatLon(listLatLong){
 
   return [toDegree(centralLatitude), toDegree(centralLongitude)];
 }
-
+/*
+* @function createMap
+**/
 function createMap () {
-	var users;
-	database.ref(sitekey + '/chat').on('value', function(snapshot) {
-		users = parseInt(snapshot.val().NumberOfUsers);
-	});
+  var users;
+  database.ref(sitekey + '/chat').on('value', function(snapshot) {
+    users = parseInt(snapshot.val().NumberOfUsers);
+  });
 
-    database.ref(sitekey + '/connections').on("value", function(snapshot) {
-      var difference = users - snapshot.numChildren();
-      if (difference > 1){
-        removeMap();
-        $("#waiting").text('Waiting for ' +  (users - snapshot.numChildren()) + ' more people')
+  database.ref(sitekey + '/connections').on("value", function(snapshot) {
+    var difference = users - snapshot.numChildren();
+    if (difference > 1){
+      removeMap();
+      $("#waiting").text('Waiting for ' +  (users - snapshot.numChildren()) + ' more people')
+    }
+    else if(difference === 1){
+      removeMap();
+      $("#waiting").text('Waiting for ' +  (users - snapshot.numChildren()) + ' more person')
+    }
+    if (snapshot.numChildren() === users) {
+
+    var locations = [];
+    database.ref(sitekey + "/connections").once("value").then(function(snapshot){
+      snapshot.forEach(function(childSnapshot){
+        var location = {lat: childSnapshot.val().Location[0], long: childSnapshot.val().Location[1], name: childSnapshot.val().userName };
+        locations.push(location);
+      });
+      var coordinates = midpointMultipleLatLon(locations);
+      var lat = coordinates[0];
+      var lon = coordinates[1];
+      initMap(lat, lon);
+      for (let location in locations) {
+        userLocation(locations[location].lat, locations[location].long, locations[location].name);
       }
-      else if(difference === 1){
-        removeMap();
-        $("#waiting").text('Waiting for ' +  (users - snapshot.numChildren()) + ' more person')
-      }
-      // var active_users = snapshot.numChildren();
-      //console.log(snapshot.numChildren() === users, users);
-	      if (snapshot.numChildren() === users) {
 
-				var locations = [];
-				database.ref(sitekey + "/connections").once("value").then(function(snapshot){
-					snapshot.forEach(function(childSnapshot){
-						var location = {lat: childSnapshot.val().Location[0], long: childSnapshot.val().Location[1], name: childSnapshot.val().userName };
-						locations.push(location);
-					});
-					var coordinates = midpointMultipleLatLon(locations);
-					var lat = coordinates[0];
-					var lon = coordinates[1];
-					initMap(lat, lon);
-          console.log(locations);
-          for (let location in locations) {
-            userLocation(locations[location].lat, locations[location].long, locations[location].name);
-          }
+     });
+    }
 
-				 });
-	      }
-
-    });
+  });
 }
-
+/*
+* @function removeMap
+**/
 function removeMap(){
   $("#Lobby").remove();
   $("#Map").remove();
   $("#List").remove();
   $("#Place").remove();
   $("#Search").append(
-          '<div class="row" id="Lobby" style="text-align:center;padding-top:10px">'+
-              '<div class="col-xs-6">' +
+          '<div class="row" id="Lobby">'+
+              '<div class="col-xs-6 text-center">' +
                 '<div id="UserJoined"></div>'  +
               '</div>' +
-              '<div class="col-xs-6" style="vertical-align: center">' +
+              '<div class="col-xs-6">' +
                 '<div>' +
                   '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>' +
                   '<br>' +
@@ -375,15 +303,15 @@ function removeMap(){
               '</div>' +
             '</div>'
     );
-  database.ref(sitekey + "/connections").once("value").then(function(snapshot){
-    snapshot.forEach(function(childSnapshot){
-      console.log(childSnapshot.val().userName);
-      $("#UserJoined").append('<div class="bg-success" id="' + childSnapshot.val().userName + '_user"><h3>'+ childSnapshot.val().userName + ' has joined</h3></div>');
-    })
-  })
+    database.ref(sitekey + "/connections").once("value").then(function(snapshot){
+      snapshot.forEach(function(childSnapshot){
+        $("#UserJoined").append('<div class="bg-success" id="' + childSnapshot.val().userName + '_user"><h3>'+ childSnapshot.val().userName + ' has joined</h3></div>');
+      });
+    });
 }
-
-/***initialize map and business search****/
+/*
+* @function initMap
+**/
 function initMap(latitude, longitude) {
   $("#HomeTab").addClass("active");
   $("#ChatTab").removeClass("active");
@@ -392,20 +320,14 @@ function initMap(latitude, longitude) {
   var pyrmont = {lat: latitude, lng: longitude};
   $('#Lobby').remove();
   $('#Search').append(
-
-  	'<div id="Map"></div>' +
-  	'<div id="List"></div>' +
-  	'<div id="Place"></div>'
-
+    '<div id="Map"></div>' +
+    '<div id="List"></div>' +
+    '<div id="Place"></div>'
   );
-
   map = new google.maps.Map(document.getElementById('Map'), {
     center: pyrmont,
     zoom: 13
   });
-
-  //userLocation(latitude, longitude);
-
   infowindow = new google.maps.InfoWindow();
   var service = new google.maps.places.PlacesService(map);
   service.nearbySearch({
@@ -414,13 +336,13 @@ function initMap(latitude, longitude) {
     type: ['restaurant']
   }, displayBusinesses);
 }
-
-/***Added marker to map and build business panels***/
+/*
+* @function displayBusinesses
+**/
 function displayBusinesses(results, status) {
   if (status === google.maps.places.PlacesServiceStatus.OK) {
     for (var i = 0; i < results.length; i++) {
       createMarker(results[i]);
-      //console.log(results[i]);
 
       let placeId = results[i].place_id;
 
@@ -435,9 +357,6 @@ function displayBusinesses(results, status) {
       panelBody.append(results[i].vicinity);
       panelBody.append('<span class="glyphicon glyphicon-menu-down pull-right"></span>');
 
-      /**gets additional details and expands .panel-body
-      ***unbinds getDetails() after first click then binds
-      ***collapseCard()**/
       panelBody.on('click', function() {
         let height = panelBody.outerHeight();
         getDetails(placeId, panelBody);
@@ -451,9 +370,9 @@ function displayBusinesses(results, status) {
     }
   }
 }
-
-/***creats markers to be added to map,
-****used in displayBusinesses()***/
+/*
+* @function createMarker
+**/
 function createMarker(place) {
   var placeLoc = place.geometry.location;
   var marker = new google.maps.Marker({
@@ -466,7 +385,9 @@ function createMarker(place) {
     infowindow.open(map, this);
   });
 }
-
+/*
+* @function userLocation
+**/
 function userLocation(latitude, longitude, userName) {
   let title = userName;
   let icon = 'assets/images/man.png';
@@ -484,13 +405,9 @@ function userLocation(latitude, longitude, userName) {
   })
 }
 
-/***gets additional business info using the placeId,
-****appends new details to .panel-body***/
 function getDetails(placeId, el) {
   let placeService = new google.maps.places.PlacesService(place);
   placeService.getDetails({placeId: placeId}, function(place, status) {
-    //console.log(status);
-    //console.log(place);
 
     let phoneNumber = place.formatted_phone_number;
     let hours = place.opening_hours.weekday_text;
@@ -507,7 +424,6 @@ function getDetails(placeId, el) {
   });
 }
 
-/***Expands and collapses panel body after details have been appended*/
 function collapseCard(el, height) {
   if(el.hasClass('collapsed')) {
     el.attr('style', '').removeClass('collapsed');
@@ -515,3 +431,58 @@ function collapseCard(el, height) {
     el.attr('style', 'max-height:' + height + 'px').addClass('collapsed');
   }
 }
+
+$(document).ready(function() {
+
+  $('#myTabs a').click(function(e) {
+    e.preventDefault()
+    $(this).tab('show')
+  });
+
+  $("#SubmitMessage").click(chatroom.SubmitMessage);
+
+  $("#SubmitNewMeetUp").on("click", function(event) {
+    event.preventDefault();
+    var name = $("#NewMeet").val().trim();
+    var numberOfUsers = $('#NumberOfUsers').val();
+    limit = parseInt(numberOfUsers);
+    sitekey = keyGen();
+    if ( name !== '' && numberOfUsers !== '') {
+      database.ref(sitekey + '/chat').set({
+        NumberOfUsers: numberOfUsers,
+        LatestName: "",
+        LatestMessage: "",
+        Chatname: name
+      });
+      createSecondForm();
+    }
+
+    $('#SubmitLocation').click(function(e) {
+      e.preventDefault();
+      locationFormHandler();
+    });
+  });
+
+  $("#SubmitExistingMeetUp").on("click", function(event) {
+    event.preventDefault();
+    var enteredSiteKey = $('#ExistingMeetUp').val().trim();
+    sitekey = $("#ExistingMeetUp").val().trim();
+    database.ref(sitekey).once("value").then(function(snapshot){
+      if (snapshot.exists() && enteredSiteKey !== '') {
+        if(parseInt(snapshot.val().chat.NumberOfUsers) === Object.keys(snapshot.val().connections).length){
+          showModal("This meet is currently full.")
+        } else{
+          createSecondForm();
+          $('#SubmitLocation').click(function(e) {
+            e.preventDefault();
+            locationFormHandler();
+          });
+        };
+      } else {
+        showModal("Sitekey doesnt exist");
+        $('#ExistingMeetUp').val('').focus();
+      };
+    });
+  });
+
+}); // doc.ready

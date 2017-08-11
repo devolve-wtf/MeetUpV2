@@ -14,12 +14,9 @@ body, h1, h2, h3, h4, h5, h6, p {
 	font-family: 'Reem Kufi', sans-serif;
 }
 
-.jumbotron {
-	z-index: 2;
-}
-
 main {
 	background: white;
+	border-radius: 0 0 5px 5px;
 	padding: 0 2rem 2rem 2rem;
 }
 
@@ -27,9 +24,19 @@ header {
 	background: white;
 }
 
-#Map {
-	height: 400px;
-	margin-bottom: 30px;
+#Chat form {
+	margin:3px 5px;
+}
+
+#ChatBox {
+	width:auto;
+	height:130px;
+	max-height:130px;
+	overflow:auto;
+}
+
+#ChatTitle {
+	text-transform: uppercase;
 }
 
 #List .list-item {
@@ -44,13 +51,25 @@ header {
 }
 
 #List .panel-body:hover {
-	background-color: #337ab7;
-	color: #FFFFFF;
+	background-color: #e3e3e3;
 	cursor: pointer;
 }
 
 #List .panel-body label.first {
 	margin-top: 15px;
+}
+
+#Lobby {
+	padding-top: 10px;
+}
+
+#Map {
+	height: 400px;
+	margin-bottom: 30px;
+}
+
+#Message {
+	font-size: 16px;
 }
 
 #StartUp {
@@ -66,14 +85,6 @@ header {
 	box-shadow: none;
 }
 
-.second-form label {
-	color: #fff;
-}
-
-#ChatTitle {
-	text-transform: uppercase;
-}
-
 #sitekey {
 	font-size: 1.4em;
 	color: #666
@@ -83,8 +94,8 @@ header {
 	color: 	#ff4d00;
 }
 
-.bg-success h3 {
-	padding: 5px;
+#TabContent .panel-body {
+	border-bottom:1px solid lightgrey;
 }
 
 #Title .container {
@@ -100,12 +111,21 @@ header {
 	color: rgba(255,255,255,.75);
 }
 
-main {
-	border-radius: 0 0 5px 5px;
+.bg-success h3 {
+	padding: 5px;
 }
 
-#Message {
-	font-size: 16px;
+.glyphicon-ok {
+	font-size:12px;
+	color:green;
+}
+
+.hidden-sm.hidden-xs.text-center {
+	border:1px solid grey;
+}
+
+.second-form label {
+	color: #fff;
 }
 
 @media screen and (max-width: 576px) {
