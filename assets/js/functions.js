@@ -290,6 +290,7 @@ function suggestion(){
         print_time.text('Time: ' + snap.val().Time);
         container.append(header).append(print_location).append(print_address).append(print_date).append(print_time);
         $("#Search").append(container);
+        finalMap(snap.val().Address,snap.val().Location);
       });
     };
   });
@@ -680,4 +681,34 @@ function collapseCard(el, height) {
   }else{
     el.attr('style', 'max-height:' + height + 'px').addClass('collapsed');
   }
+}
+
+function finalMap(address, name) {
+  let title = name;
+  geocoder.geocode({
+    'address': address
+  }, function(results, status) {
+    if (status == 'OK') {
+      let lat = results[0].geometry.location.lat();
+      let long = results[0].geometry.location.lng();
+      let pyrmont = {lat: lat, lng: long};
+
+      map = new google.maps.Map(document.getElementById('Map'), {
+        center: pyrmont,
+        zoom: 13
+      });
+      infowindow = new google.maps.InfoWindow();
+
+      var marker = new google.maps.Marker({
+        map: map,
+        position: pyrmont,
+        title: title
+      });
+
+      google.maps.event.addListener(marker, 'click', function() {
+        infowindow.setContent(title);
+        infowindow.open(map, this);
+      });
+    }
+  });
 }
