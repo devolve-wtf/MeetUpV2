@@ -245,7 +245,7 @@ function suggestion(){
       let print_address = $('<h5>');
       let print_date = $('<h5>');
       let print_time = $('<h5>');
-      let print_accepted = $('<h6>');
+      let print_accepted = $('<h5>');
       print_location.text('Location: ' + snapshot.val().Location);
       print_address.text('Addresss: ' + snapshot.val().Address);
       print_date.text('Date: ' + snapshot.val().myDate);
