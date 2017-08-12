@@ -106,16 +106,20 @@ $(document).ready(function() {
     var name = $("#NewMeet").val().trim();
     var numberOfUsers = $('#NumberOfUsers').val();
     limit = parseInt(numberOfUsers);
-    sitekey = keyGen();
-    if ( name !== '' && numberOfUsers !== '') {
-      database.ref(sitekey + '/chat').set({
-        NumberOfUsers: numberOfUsers,
-        LatestName: "",
-        LatestMessage: "",
-        Chatname: name
-      });
+    if (limit > 0){
+      sitekey = keyGen();
+      if ( name !== '' && numberOfUsers !== '') {
+        database.ref(sitekey + '/chat').set({
+          NumberOfUsers: numberOfUsers,
+          LatestName: "",
+          LatestMessage: "",
+          Chatname: name
+        });
 
-      createSecondForm();
+        createSecondForm();
+      }
+    }else{
+      showModal("Number of Users must be greater than 0.");
     }
 
     $('#SubmitLocation').click(function(e) {
@@ -323,6 +327,17 @@ function createSecondForm() {
     '<div class="col-md-3"></div>' +
     '</div>'
   );
+  var defaultBounds = new google.maps.LatLngBounds(
+  new google.maps.LatLng(-33.8902, 151.1759),
+  new google.maps.LatLng(-33.8474, 151.2631));
+
+  var input = document.getElementById('Location');
+  var options = {
+    bounds: defaultBounds,
+    types: ['address']
+  };
+  autocomplete = new google.maps.places.Autocomplete(input, options);
+
 }
 
 function locationFormHandler() {
