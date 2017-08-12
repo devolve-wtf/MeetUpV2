@@ -106,16 +106,20 @@ $(document).ready(function() {
     var name = $("#NewMeet").val().trim();
     var numberOfUsers = $('#NumberOfUsers').val();
     limit = parseInt(numberOfUsers);
-    sitekey = keyGen();
-    if ( name !== '' && numberOfUsers !== '') {
-      database.ref(sitekey + '/chat').set({
-        NumberOfUsers: numberOfUsers,
-        LatestName: "",
-        LatestMessage: "",
-        Chatname: name
-      });
+    if (limit > 0){
+      sitekey = keyGen();
+      if ( name !== '' && numberOfUsers !== '') {
+        database.ref(sitekey + '/chat').set({
+          NumberOfUsers: numberOfUsers,
+          LatestName: "",
+          LatestMessage: "",
+          Chatname: name
+        });
 
-      createSecondForm();
+        createSecondForm();
+      }
+    }else{
+      showModal("Number of Users must be greater than 0.");
     }
 
     $('#SubmitLocation').click(function(e) {
