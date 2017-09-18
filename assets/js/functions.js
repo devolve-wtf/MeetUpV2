@@ -6,12 +6,12 @@ var active_suggestion = false;
 
 // Initialize Firebase
 var config = {
-  apiKey: "AIzaSyDkKzJvL4pPVhuJuSHJRZyBA11FbeFJz_8",
-  authDomain: "meetup-8339a.firebaseapp.com",
-  databaseURL: "https://meetup-8339a.firebaseio.com",
-  projectId: "meetup-8339a",
-  storageBucket: "meetup-8339a.appspot.com",
-  messagingSenderId: "292796186459"
+    apiKey: "AIzaSyDlBcC5OWK63YIjKYTI1PfCy_Zfstm9Xy8",
+    authDomain: "andres-meetup.firebaseapp.com",
+    databaseURL: "https://andres-meetup.firebaseio.com",
+    projectId: "andres-meetup",
+    storageBucket: "andres-meetup.appspot.com",
+    messagingSenderId: "956032318275"
 };
 firebase.initializeApp(config);
 
